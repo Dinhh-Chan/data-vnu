@@ -17,3 +17,5 @@ redis==4.6.0
 pydantic_settings
 asyncpg
 watchdog
+minio
+python-multipart
