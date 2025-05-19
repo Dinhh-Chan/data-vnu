@@ -13,8 +13,8 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: app
       SQL_DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/app
-      RESET_DB: true 
-      AUTO_MIGRATE: true
+      # RESET_DB: true 
+      # AUTO_MIGRATE: true
       MINIO_ENDPOINT: minio:9000
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin
@@ -24,7 +24,6 @@ services:
     depends_on:
       - db
       - minio
-    command: ["sh", "/app/start.sh"]
 
   db:
     image: postgres:14
