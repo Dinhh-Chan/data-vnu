@@ -1,57 +1,53 @@
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException, status, Depends
 from minio import Minio
+from minio.error import S3Error
 from app.services.minio_services import minioClass
 from app.services.file_services import fileServices
+from app.dto.files import FileCreate, FileSchema
+from app.services.db_file_service import DBFileService
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.db.session import get_db
+import os 
+import uuid
 
 router = APIRouter()
 
-@router.post("/upload")
-async def upload_file_minio(
+@router.post(
+    "/upload",
+    response_model=FileSchema,
+    status_code=201,
+    summary="Upload file to MinIO and save metadata to DB"
+)
+async def upload_and_save(
     file: UploadFile = File(...),
-    name: str = Form(...),
-    description: str = Form(...),
-    category: str = Form(...),
-    minio_client: Minio = Depends(minioClass.get_minio_client), 
+    custom_name: str = Form(None),
+    description: str = Form(None),
+    minio_client: Minio = Depends(minioClass.get_minio_client),
+    db: AsyncSession = Depends(get_db)
 ):
-    response = await fileServices.upload_file_to_minio(
+    # 1. Upload lên MinIO, MinioService sẽ tự lấy extension
+    info = await fileServices.upload_to_minio(
         file=file,
-        custom_filename=name,   
+        custom_filename=custom_name,
         description=description,
-        file_type=category,
         minio_client=minio_client
     )
-    if not response:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="File upload failed",
-        )
-    return {
-        "filename": response["filename"],
-        "url": response["url"],
-        "description": response["description"],
-        "file_type": response["file_type"]
-    }
-@router.get("/download/{file_name}")
-async def download_file(file_name: str, minio_client: Minio = Depends(minioClass.get_minio_client)):
-    try:
-        response = await fileServices.download_file(file_name, minio_client)
-        return response
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error downloading file: {str(e)}",
-        )
-@router.get("/list")
-async def list_files(minio_client: Minio = Depends(minioClass.get_minio_client)):
-    try:
-        files = await fileServices.get_all_files(minio_client)
-        return files
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error listing files: {str(e)}",
-        )
+
+    # 2. Chuẩn bị schema và lưu vào DB
+    file_create = FileCreate(
+        file_name=info["file_name"],
+        file_type=info["file_type"],
+        file_size=info["file_size"],
+        description=info["description"],
+        url=info["url"]
+    )
+    saved = await DBFileService.create(db, file_create)
+    return saved
+
+@router.get(
+    "/files",
+    response_model=list[FileSchema],
+    summary="List all uploaded files"
+)
+async def list_files(db: AsyncSession = Depends(get_db)):
+    return await DBFileService.list_all(db)
