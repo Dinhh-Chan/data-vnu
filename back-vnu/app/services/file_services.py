@@ -45,6 +45,7 @@ class fileServices(object):
         bucket_name = os.getenv('MINIO_BUCKET', 'mybucket')
         try:
             minio_client.stat_object(bucket_name, file_name)
+            
             file_data = minio_client.get_object(bucket_name, file_name)
             response = StreamingResponse(
                 file_data.stream(32 * 1024),

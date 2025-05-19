@@ -51,3 +51,20 @@ async def upload_and_save(
 )
 async def list_files(db: AsyncSession = Depends(get_db)):
     return await DBFileService.list_all(db)
+@router.post(
+    "/download",
+    summary="Download a file from MinIO",
+)
+async def download_file(
+    file_name: str = Form(...),
+    minio_client: Minio = Depends(minioClass.get_minio_client)
+):
+    try:
+        return await fileServices.download_file(file_name, minio_client)
+    except HTTPException as e:
+        raise e
+    except S3Error as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"File not found: {e}"
+        )
