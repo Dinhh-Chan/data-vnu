@@ -7,13 +7,13 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app
 
-# Install system dependencies
+# Install system dependencies (bao gồm psql)
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends gcc libpq-dev \
+    && apt-get install -y --no-install-recommends gcc libpq-dev postgresql-client \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Cài đặt watchdog (để theo dõi thay đổi file tốt hơn)
+# Install watchdog
 RUN pip install watchdog
 
 # Install Python dependencies
@@ -24,9 +24,6 @@ RUN pip install --no-cache-dir -r requirements.txt && \
 # Copy project
 COPY . /app/
 
-# Make start script executable
-RUN chmod +x /app/start.sh
-
-# Use start.sh as entrypoint
+# Copy and make start.sh executable
 COPY start.sh /app/
 RUN chmod +x /app/start.sh
