@@ -29,7 +29,7 @@ async def get_all_endpoints(db: AsyncSession = Depends(get_db)):
 async def get_endpoint(endpoint_id: int, db: AsyncSession = Depends(get_db)):
     return await ExternalAPIEndpointService.get_by_id(db, endpoint_id)
 
-@router.api_route("/proxy/{endpoint_id}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
+@router.api_route("/proxy/{endpoint_id}", methods=["GET"])
 async def proxy_endpoint(endpoint_id: int, request: Request, db: AsyncSession = Depends(get_db)):
     endpoint = await db.get(ExternalAPIEndpoint, endpoint_id)
     if not endpoint or not endpoint.is_active:
