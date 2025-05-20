@@ -2,7 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.services.db_config_service import DBConfigService
 from app.db.session import get_db
 from app.models.db_connections import DBConnection
-from app.dto.db_connection import DBConnectionSchema ,DBConnectionCreate
+from app.dto.db_connection import DBConnectionSchema ,DBConnectionCreate, DBConnectionUpdate
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.services.introspect import DBIntrospectionService
 from sqlalchemy.orm import Session 
 router = APIRouter()
 
@@ -46,3 +48,17 @@ async def create_db_connection(
     db: Session = Depends(get_db),
 ):
     return await DBConfigService.create_db_connection(db, db_connection_data)
+@router.get("/introspect/{connection_id}")
+async def introspect_database(connection_id: int, db: AsyncSession = Depends(get_db)):
+    db_connection = await db.get(DBConnection, connection_id)
+    if not db_connection:
+        raise HTTPException(status_code=404, detail="Database connection not found")
+
+    return DBIntrospectionService.introspect_database(db_connection)
+@router.put("/{connection_id}", response_model=DBConnectionSchema)
+async def update_db_connection(
+    connection_id: int,
+    update_data: DBConnectionUpdate,
+    db: Session = Depends(get_db),
+):
+    return await DBConfigService.update_db_connection(db, connection_id, update_data)

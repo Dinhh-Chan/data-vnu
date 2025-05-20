@@ -25,3 +25,12 @@ class DBConnectionCreate(BaseModel):
     password: Optional[str] = None
     extra_uri: Optional[str] = None
     is_active: Optional[bool] = True
+class DBConnectionUpdate(BaseModel):
+    db_type: Optional[str]
+    host: Optional[str]
+    port: Optional[int]
+    database_name: Optional[str]
+    username: Optional[str]
+    password: Optional[str]
+    extra_uri: Optional[str]
+    is_active: Optional[bool]

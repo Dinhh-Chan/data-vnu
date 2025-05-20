@@ -2,7 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.db_connections import DBConnection
 from fastapi import HTTPException, status
-from app.dto.db_connection import DBConnectionCreate
+from app.dto.db_connection import DBConnectionCreate, DBConnectionUpdate
 from app.models.db_connections import DBConnection
 from sqlalchemy.orm import Session 
 class DBConfigService:
@@ -42,4 +42,25 @@ class DBConfigService:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Error creating database connection: {str(e)}",
+            )
+    @staticmethod
+    async def update_db_connection(
+        db: AsyncSession, connection_id: int, update_data: DBConnectionUpdate
+    ):
+        try:
+            db_obj = await db.get(DBConnection, connection_id)
+            if not db_obj:
+                raise HTTPException(status_code=404, detail="Connection not found")
+
+            for field, value in update_data.dict(exclude_unset=True).items():
+                setattr(db_obj, field, value)
+
+            await db.commit()
+            await db.refresh(db_obj)
+            return db_obj
+        except Exception as e:
+            await db.rollback()
+            raise HTTPException(
+                status_code=500,
+                detail=f"Error updating database connection: {str(e)}"
             )

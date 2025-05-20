@@ -19,3 +19,5 @@ asyncpg
 watchdog
 minio
 python-multipart
+pymysql
+pymongo
