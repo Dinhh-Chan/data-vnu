@@ -51,7 +51,7 @@ async def proxy_endpoint(endpoint_id: int, request: Request, db: AsyncSession = 
 
         # Thêm headers mặc định từ DB nếu có
         if endpoint.default_headers:
-            import json
+
             headers.update(json.loads(endpoint.default_headers))
 
         async with httpx.AsyncClient() as client:
