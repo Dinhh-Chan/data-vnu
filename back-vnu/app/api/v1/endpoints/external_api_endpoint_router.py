@@ -7,7 +7,7 @@ from app.models.external_api_endpoints import ExternalAPIEndpoint
 import httpx
 import json
 
-router = APIRouter(prefix="/external-endpoints", tags=["External API Endpoints"])
+router = APIRouter()
 
 @router.post("/", response_model=ExternalAPIEndpointSchema)
 async def create_endpoint(data: ExternalAPIEndpointCreate, db: AsyncSession = Depends(get_db)):
